@@ -115,7 +115,7 @@ with col1:
 
 with col2:
     height = st.number_input("Ύψος (cm)", min_value=100.0, max_value=250.0, value=170.0, step=1.0)
-    formula = st.selectbox("Εξίσωση", ["Mifflin-St Jeor", "Harris-Benedict"])
+    formula = st.selectbox("Εξίσωση", ["Harris-Benedict", "Mifflin-St Jeor"])
 
 st.divider()
 
