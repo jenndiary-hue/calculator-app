@@ -45,16 +45,31 @@ def calculate_ibw(height_cm, gender):
     if gender == "Άνδρας": return 50.0 + (2.3 * inches_over_5_ft)
     else: return 45.5 + (2.3 * inches_over_5_ft)
 
+def calculate_healthy_weight_range(height_cm, age):
+    height_m = height_cm / 100
+    min_bmi = 18.5
+    max_bmi = 24.9
+    
+    # Ελαφριά προσαρμογή υγιούς βάρους λόγω ηλικίας
+    if age > 50:
+        min_bmi = 20.0
+        max_bmi = 27.0
+    elif age > 35:
+        min_bmi = 19.0
+        max_bmi = 25.5
+
+    min_weight = min_bmi * (height_m ** 2)
+    max_weight = max_bmi * (height_m ** 2)
+    return min_weight, max_weight
+
 # --- ΣΥΝΑΡΤΗΣΗ ΔΗΜΙΟΥΡΓΙΑΣ PDF ---
-def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, bmr, tdee, goal, target_cals, water, prot, fat, carb):
+def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, min_hw, max_hw, bmr, tdee, goal, target_cals, water, prot, fat, carb):
     pdf = FPDF()
     pdf.add_page()
     
-    try:
-        pdf.add_font('Arial', '', 'arial.ttf')
-        pdf.set_font('Arial', '', 16)
-    except:
-        pdf.set_font('helvetica', '', 16)
+    # Αφαιρέσαμε το try-except για να διαβάζει ΑΥΣΤΗΡΑ το αρχείο arial.ttf που ανεβάσαμε
+    pdf.add_font('Arial', '', 'arial.ttf')
+    pdf.set_font('Arial', '', 16)
         
     pdf.cell(0, 10, "Αναφορά Διατροφικών Αναγκών", ln=True, align="C")
     pdf.set_font('Arial', '', 11)
@@ -74,6 +89,7 @@ def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, bmr, td
     pdf.set_font('Arial', '', 12)
     pdf.cell(0, 8, f"Δείκτης Μάζας Σώματος (BMI): {bmi:.1f} ({bmi_cat})", ln=True)
     pdf.cell(0, 8, f"Ιδανικό Βάρος (Devine): {ibw:.1f} kg", ln=True)
+    pdf.cell(0, 8, f"Εύρος Υγιούς Βάρους: Από {min_hw:.1f} kg έως {max_hw:.1f} kg", ln=True)
     pdf.cell(0, 8, f"Βασικός Μεταβολισμός (BMR): {bmr:.0f} kcal", ln=True)
     pdf.cell(0, 8, f"Συνολική Δαπάνη Συντήρησης (TDEE): {tdee:.0f} kcal", ln=True)
     pdf.ln(5)
@@ -107,7 +123,6 @@ with col1:
 
 with col2:
     height = st.number_input("Ύψος (cm)", min_value=100.0, max_value=250.0, value=170.0, step=1.0)
-    # Harris-Benedict ως default (πρώτη επιλογή)
     formula = st.selectbox("Εξίσωση", ["Harris-Benedict", "Mifflin-St Jeor"])
 
 st.divider()
@@ -145,6 +160,7 @@ if st.button("Υπολογισμός ➔", key="calc_btn"):
     bmi, bmi_cat = calculate_bmi(weight, height)
     bmr = calculate_bmr(weight, height, age, gender, formula)
     ibw = calculate_ibw(height, gender)
+    min_hw, max_hw = calculate_healthy_weight_range(height, age)
     tdee = bmr * pal
     water_liters = weight * 0.035 
     
@@ -156,6 +172,7 @@ if st.button("Υπολογισμός ➔", key="calc_btn"):
     res_col3.metric("BMR", f"{bmr:.0f} kcal")
     res_col4.metric("TDEE", f"{tdee:.0f} kcal")
     
+    st.info(f"⚖️ **Εύρος Υγιούς Βάρους:** Από **{min_hw:.1f} kg** έως **{max_hw:.1f} kg** (βάσει ύψους και ηλικίας).")
     st.divider()
     
     if goal == "Απώλεια":
@@ -190,7 +207,7 @@ if st.button("Υπολογισμός ➔", key="calc_btn"):
         st.divider()
         
         goal_text = f"{goal} ({kg_per_week}kg/εβδ)" if goal != "Συντήρηση" else "Συντήρηση"
-        pdf_data = create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, bmr, tdee, goal_text, target_cals, water_liters, protein_grams, fat_grams, carb_grams)
+        pdf_data = create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, min_hw, max_hw, bmr, tdee, goal_text, target_cals, water_liters, protein_grams, fat_grams, carb_grams)
         
         st.download_button(
             label="📥 Λήψη Αποτελεσμάτων σε PDF",
