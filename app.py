@@ -1,25 +1,19 @@
 import streamlit as st
 from fpdf import FPDF
 from datetime import date
+import os
 
 # --- 1. ΕΙΣΑΓΩΓΗ STYLING ΑΠΟ FIGMA (CSS) ---
 st.markdown("""
     <style>
     .stApp { background-color: #FAFAFA; }
-    h1, h2, h3 { color: #2A3B4C !important; font-family: 'Arial', sans-serif; }
+    h1, h2, h3 { color: #2A3B4C !important; font-family: 'arial', sans-serif; }
     .stButton>button {
         background-color: #E76F51; color: white; border-radius: 8px;        
         padding: 10px 24px; font-weight: bold; border: none; width: 100%;
     }
     .stButton>button:hover { background-color: #D65A3D; color: white; }
     [data-testid="stMetricValue"] { color: #E76F51; }
-    
-    /* Νέο στιλ για το κουμπί του PDF */
-    .stDownloadButton>button {
-        background-color: #2A3B4C; color: white; border-radius: 8px;
-        padding: 10px 24px; font-weight: bold; border: none; width: 100%;
-    }
-    .stDownloadButton>button:hover { background-color: #1a252f; color: white; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -46,61 +40,65 @@ def calculate_ibw(height_cm, gender):
     if gender == "Άνδρας": return 50.0 + (2.3 * inches_over_5_ft)
     else: return 45.5 + (2.3 * inches_over_5_ft)
 
+def calculate_healthy_weight_range(height_cm, age):
+    height_m = height_cm / 100
+    min_bmi = 18.5
+    max_bmi = 24.9
+    if age > 50:
+        min_bmi = 20.0
+        max_bmi = 27.0
+    elif age > 35:
+        min_bmi = 19.0
+        max_bmi = 25.5
+    return min_bmi * (height_m ** 2), max_bmi * (height_m ** 2)
+
 # --- ΣΥΝΑΡΤΗΣΗ ΔΗΜΙΟΥΡΓΙΑΣ PDF ---
-def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, bmr, tdee, goal, target_cals, water, prot, fat, carb):
+def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, min_hw, max_hw, bmr, tdee, goal, target_cals, water, prot, fat, carb):
     pdf = FPDF()
     pdf.add_page()
     
-    # Εισαγωγή της Arial από τα Windows για να διαβάζει Ελληνικά
-    try:
-        pdf.add_font('Arial', '', r'C:\Windows\Fonts\arial.ttf')
-        pdf.set_font('Arial', '', 16)
-    except:
-        pdf.set_font('helvetica', '', 16)
+    # Διαβάζει το αρχείο arial.ttf με νέο όνομα 'GreekFont' για να μην μπερδεύεται
+    pdf.add_font('GreekFont', '', 'arial.ttf')
+    pdf.set_font('GreekFont', '', 16)
         
-    # Κεφαλίδα
     pdf.cell(0, 10, "Αναφορά Διατροφικών Αναγκών", ln=True, align="C")
-    pdf.set_font('Arial', '', 11)
+    pdf.set_font('GreekFont', '', 11)
     pdf.cell(0, 10, f"Ημερομηνία: {date.today().strftime('%d/%m/%Y')}", ln=True, align="R")
     pdf.line(10, 25, 200, 25)
     pdf.ln(10)
     
-    # 1. Προφίλ
-    pdf.set_font('Arial', '', 14)
+    pdf.set_font('GreekFont', '', 14)
     pdf.cell(0, 10, "1. Προφίλ & Σωματομετρικά", ln=True)
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('GreekFont', '', 12)
     pdf.cell(0, 8, f"Φύλο: {gender}  |  Ηλικία: {age} ετών  |  Ύψος: {height} cm  |  Βάρος: {weight} kg", ln=True)
     pdf.cell(0, 8, f"Φυσική Δραστηριότητα: {pal_desc}", ln=True)
     pdf.ln(5)
     
-    # 2. Δείκτες
-    pdf.set_font('Arial', '', 14)
+    pdf.set_font('GreekFont', '', 14)
     pdf.cell(0, 10, "2. Βασικοί Δείκτες & Ενέργεια", ln=True)
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('GreekFont', '', 12)
     pdf.cell(0, 8, f"Δείκτης Μάζας Σώματος (BMI): {bmi:.1f} ({bmi_cat})", ln=True)
     pdf.cell(0, 8, f"Ιδανικό Βάρος (Devine): {ibw:.1f} kg", ln=True)
+    pdf.cell(0, 8, f"Εύρος Υγιούς Βάρους: Από {min_hw:.1f} kg έως {max_hw:.1f} kg", ln=True)
     pdf.cell(0, 8, f"Βασικός Μεταβολισμός (BMR): {bmr:.0f} kcal", ln=True)
     pdf.cell(0, 8, f"Συνολική Δαπάνη Συντήρησης (TDEE): {tdee:.0f} kcal", ln=True)
     pdf.ln(5)
     
-    # 3. Στόχος
-    pdf.set_font('Arial', '', 14)
+    pdf.set_font('GreekFont', '', 14)
     pdf.cell(0, 10, "3. Διατροφικός Στόχος", ln=True)
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('GreekFont', '', 12)
     pdf.cell(0, 8, f"Στόχος: {goal}", ln=True)
     pdf.cell(0, 8, f"Προτεινόμενη Πρόσληψη Ενέργειας: {target_cals:.0f} kcal / ημέρα", ln=True)
     pdf.cell(0, 8, f"Στόχος Υδάτωσης: {water:.1f} Λίτρα / ημέρα", ln=True)
     pdf.ln(5)
     
-    # 4. Μακροθρεπτικά
-    pdf.set_font('Arial', '', 14)
+    pdf.set_font('GreekFont', '', 14)
     pdf.cell(0, 10, "4. Κατανομή Μακροθρεπτικών", ln=True)
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('GreekFont', '', 12)
     pdf.cell(0, 8, f"Πρωτεΐνη: {prot:.0f} g", ln=True)
     pdf.cell(0, 8, f"Λιπαρά: {fat:.0f} g", ln=True)
     pdf.cell(0, 8, f"Υδατάνθρακες: {carb:.0f} g", ln=True)
     
-    # Επιστρέφουμε το PDF σε μορφή bytes για να το κατεβάσει το Streamlit
     return bytes(pdf.output())
 
 # --- 3. ΠΕΡΙΒΑΛΛΟΝ ΧΡΗΣΤΗ (UI) ---
@@ -125,7 +123,6 @@ elif pal < 1.55: pal_desc = "Ελαφρά δραστήριος (ελαφριά �
 elif pal < 1.70: pal_desc = "Μέτρια δραστήριος (μέτρια άσκηση)"
 elif pal < 1.90: pal_desc = "Πολύ δραστήριος (σκληρή άσκηση)"
 else: pal_desc = "Υπερβολικά δραστήριος"
-st.caption(f"📌 **Κατηγορία:** {pal_desc}")
 
 st.divider()
 
@@ -134,27 +131,23 @@ col_goal, col_macros = st.columns(2)
 with col_goal:
     st.subheader("Στόχος")
     goal = st.radio("Επιλογή Στόχου", ["Συντήρηση", "Απώλεια", "Αύξηση"], horizontal=True)
-    kg_per_week = 0.0
-    
-    if goal != "Συντήρηση":
-        kg_per_week = st.slider("Ρυθμός (Κιλά ανά εβδομάδα)", min_value=0.1, max_value=1.5, value=0.5, step=0.1)
+    kg_per_week = 0.0 if goal == "Συντήρηση" else st.slider("Ρυθμός (Κιλά ανά εβδομάδα)", 0.1, 1.5, 0.5, 0.1)
 
 with col_macros:
     st.subheader("Μακροθρεπτικά")
-    protein_per_kg = st.slider("Πρωτεΐνη (g ανά κιλό βάρους)", min_value=0.8, max_value=3.0, value=1.5, step=0.1)
-    fat_percent = st.slider("Ποσοστό Λίπους (%)", min_value=15, max_value=50, value=30, step=1)
+    protein_per_kg = st.slider("Πρωτεΐνη (g ανά κιλό βάρους)", 0.8, 3.0, 1.5, 0.1)
+    fat_percent = st.slider("Ποσοστό Λίπους (%)", 15, 50, 30, 1)
 
 st.divider()
 
 # --- 4. ΑΠΟΤΕΛΕΣΜΑΤΑ & ΕΞΑΓΩΓΗ ---
 if st.button("Υπολογισμός ➔", key="calc_btn"):
-    
     bmi, bmi_cat = calculate_bmi(weight, height)
     bmr = calculate_bmr(weight, height, age, gender, formula)
     ibw = calculate_ibw(height, gender)
+    min_hw, max_hw = calculate_healthy_weight_range(height, age)
     tdee = bmr * pal
     water_liters = weight * 0.035 
-    
     daily_shift = (7700 * kg_per_week) / 7
     
     res_col1, res_col2, res_col3, res_col4 = st.columns(4)
@@ -163,46 +156,27 @@ if st.button("Υπολογισμός ➔", key="calc_btn"):
     res_col3.metric("BMR", f"{bmr:.0f} kcal")
     res_col4.metric("TDEE", f"{tdee:.0f} kcal")
     
+    st.info(f"⚖️ **Εύρος Υγιούς Βάρους:** Από **{min_hw:.1f} kg** έως **{max_hw:.1f} kg** (βάσει ύψους και ηλικίας).")
     st.divider()
     
-    if goal == "Απώλεια":
-        target_cals = tdee - daily_shift
-        st.warning(f"📉 Έλλειμμα **{daily_shift:.0f} kcal** ημερησίως (TDEE - {daily_shift:.0f}).")
-    elif goal == "Αύξηση":
-        target_cals = tdee + daily_shift
-        st.info(f"📈 Πλεόνασμα **{daily_shift:.0f} kcal** ημερησίως (TDEE + {daily_shift:.0f}).")
-    else:
-        target_cals = tdee
-        
+    target_cals = tdee - daily_shift if goal == "Απώλεια" else (tdee + daily_shift if goal == "Αύξηση" else tdee)
     st.success(f"## 🍽️ Θερμίδες: {target_cals:.0f} kcal/ημέρα  |  💧 Νερό: {water_liters:.1f} L/ημέρα")
-
     st.divider()
     
     protein_grams = weight * protein_per_kg
-    protein_cals = protein_grams * 4
-    fat_cals = target_cals * (fat_percent / 100)
-    fat_grams = fat_cals / 9
-    carb_cals = target_cals - protein_cals - fat_cals
-    carb_grams = carb_cals / 4
+    fat_grams = (target_cals * (fat_percent / 100)) / 9
+    carb_grams = (target_cals - (protein_grams * 4) - (fat_grams * 9)) / 4
 
-    st.markdown("### 📊 Κατανομή Μακροθρεπτικών")
-    if carb_grams < 0:
-        st.error("⚠️ Προσοχή: Οι θερμίδες από Πρωτεΐνη και Λίπος ξεπερνούν τις συνολικές θερμίδες!")
+    mac_col1, mac_col2, mac_col3 = st.columns(3)
+    mac_col1.metric("🥩 Πρωτεΐνη", f"{protein_grams:.0f} g")
+    mac_col2.metric("🥑 Λιπαρά", f"{fat_grams:.0f} g")
+    mac_col3.metric("🍞 Υδατάνθρακες", f"{carb_grams:.0f} g")
+    st.divider()
+    
+    # Έξυπνος έλεγχος αρχείου!
+    if not os.path.exists('arial.ttf'):
+        st.error("⚠️ Σφάλμα: Δεν βρέθηκε το αρχείο 'arial.ttf' στο GitHub. Παρακαλώ ανέβασέ το (με μικρά γράμματα) για να λειτουργήσει το PDF!")
     else:
-        mac_col1, mac_col2, mac_col3 = st.columns(3)
-        mac_col1.metric("🥩 Πρωτεΐνη", f"{protein_grams:.0f} g")
-        mac_col2.metric("🥑 Λιπαρά", f"{fat_grams:.0f} g")
-        mac_col3.metric("🍞 Υδατάνθρακες", f"{carb_grams:.0f} g")
-        
-        st.divider()
-        
-        # --- ΔΗΜΙΟΥΡΓΙΑ ΤΟΥ ΚΟΥΜΠΙΟΥ PDF ΣΤΟ ΤΕΛΟΣ ---
         goal_text = f"{goal} ({kg_per_week}kg/εβδ)" if goal != "Συντήρηση" else "Συντήρηση"
-        pdf_data = create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, bmr, tdee, goal_text, target_cals, water_liters, protein_grams, fat_grams, carb_grams)
-        
-        st.download_button(
-            label="📥 Λήψη Αποτελεσμάτων σε PDF",
-            data=pdf_data,
-            file_name="diet_plan_summary.pdf",
-            mime="application/pdf"
-        )
+        pdf_data = create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, min_hw, max_hw, bmr, tdee, goal_text, target_cals, water_liters, protein_grams, fat_grams, carb_grams)
+        st.download_button(label="📥 Λήψη Αποτελεσμάτων σε PDF", data=pdf_data, file_name="diet_plan_summary.pdf", mime="application/pdf")
