@@ -1,6 +1,8 @@
 import streamlit as st
 from fpdf import FPDF
 from datetime import date
+import os
+import urllib.request
 
 # --- 1. ΕΙΣΑΓΩΓΗ STYLING ΑΠΟ FIGMA (CSS) ---
 st.markdown("""
@@ -67,26 +69,31 @@ def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, min_hw,
     pdf = FPDF()
     pdf.add_page()
     
-    # Αφαιρέσαμε το try-except για να διαβάζει ΑΥΣΤΗΡΑ το αρχείο arial.ttf που ανεβάσαμε
-    pdf.add_font('Arial', '', 'arial.ttf')
-    pdf.set_font('Arial', '', 16)
+    # --- ΑΠΟΛΥΤΗ ΛΥΣΗ ΓΙΑ ΤΑ ΕΛΛΗΝΙΚΑ ΣΤΟ STREAMLIT CLOUD ---
+    font_path = "Roboto-Regular.ttf"
+    if not os.path.exists(font_path):
+        font_url = "https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Regular.ttf"
+        urllib.request.urlretrieve(font_url, font_path)
         
+    pdf.add_font('Roboto', '', font_path)
+    pdf.set_font('Roboto', '', 16)
+    
     pdf.cell(0, 10, "Αναφορά Διατροφικών Αναγκών", ln=True, align="C")
-    pdf.set_font('Arial', '', 11)
+    pdf.set_font('Roboto', '', 11)
     pdf.cell(0, 10, f"Ημερομηνία: {date.today().strftime('%d/%m/%Y')}", ln=True, align="R")
     pdf.line(10, 25, 200, 25)
     pdf.ln(10)
     
-    pdf.set_font('Arial', '', 14)
+    pdf.set_font('Roboto', '', 14)
     pdf.cell(0, 10, "1. Προφίλ & Σωματομετρικά", ln=True)
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('Roboto', '', 12)
     pdf.cell(0, 8, f"Φύλο: {gender}  |  Ηλικία: {age} ετών  |  Ύψος: {height} cm  |  Βάρος: {weight} kg", ln=True)
     pdf.cell(0, 8, f"Φυσική Δραστηριότητα: {pal_desc}", ln=True)
     pdf.ln(5)
     
-    pdf.set_font('Arial', '', 14)
+    pdf.set_font('Roboto', '', 14)
     pdf.cell(0, 10, "2. Βασικοί Δείκτες & Ενέργεια", ln=True)
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('Roboto', '', 12)
     pdf.cell(0, 8, f"Δείκτης Μάζας Σώματος (BMI): {bmi:.1f} ({bmi_cat})", ln=True)
     pdf.cell(0, 8, f"Ιδανικό Βάρος (Devine): {ibw:.1f} kg", ln=True)
     pdf.cell(0, 8, f"Εύρος Υγιούς Βάρους: Από {min_hw:.1f} kg έως {max_hw:.1f} kg", ln=True)
@@ -94,17 +101,17 @@ def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, min_hw,
     pdf.cell(0, 8, f"Συνολική Δαπάνη Συντήρησης (TDEE): {tdee:.0f} kcal", ln=True)
     pdf.ln(5)
     
-    pdf.set_font('Arial', '', 14)
+    pdf.set_font('Roboto', '', 14)
     pdf.cell(0, 10, "3. Διατροφικός Στόχος", ln=True)
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('Roboto', '', 12)
     pdf.cell(0, 8, f"Στόχος: {goal}", ln=True)
     pdf.cell(0, 8, f"Προτεινόμενη Πρόσληψη Ενέργειας: {target_cals:.0f} kcal / ημέρα", ln=True)
     pdf.cell(0, 8, f"Στόχος Υδάτωσης: {water:.1f} Λίτρα / ημέρα", ln=True)
     pdf.ln(5)
     
-    pdf.set_font('Arial', '', 14)
+    pdf.set_font('Roboto', '', 14)
     pdf.cell(0, 10, "4. Κατανομή Μακροθρεπτικών", ln=True)
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('Roboto', '', 12)
     pdf.cell(0, 8, f"Πρωτεΐνη: {prot:.0f} g", ln=True)
     pdf.cell(0, 8, f"Λιπαρά: {fat:.0f} g", ln=True)
     pdf.cell(0, 8, f"Υδατάνθρακες: {carb:.0f} g", ln=True)
