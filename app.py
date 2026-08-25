@@ -124,6 +124,8 @@ elif pal < 1.70: pal_desc = "Μέτρια δραστήριος (μέτρια ά�
 elif pal < 1.90: pal_desc = "Πολύ δραστήριος (σκληρή άσκηση)"
 else: pal_desc = "Υπερβολικά δραστήριος"
 
+st.caption(f"📌 **Κατηγορία:** {pal_desc}")  # <--- Πρόσθεσε αυτή τη γραμμή εδώ!
+
 st.divider()
 
 col_goal, col_macros = st.columns(2)
