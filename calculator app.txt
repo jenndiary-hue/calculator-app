@@ -6,7 +6,7 @@ from datetime import date
 st.markdown("""
     <style>
     .stApp { background-color: #FAFAFA; }
-    h1, h2, h3 { color: #2A3B4C !important; font-family: 'arial', sans-serif; }
+    h1, h2, h3 { color: #2A3B4C !important; font-family: 'Arial', sans-serif; }
     .stButton>button {
         background-color: #E76F51; color: white; border-radius: 8px;        
         padding: 10px 24px; font-weight: bold; border: none; width: 100%;
@@ -50,7 +50,6 @@ def calculate_healthy_weight_range(height_cm, age):
     min_bmi = 18.5
     max_bmi = 24.9
     
-    # Ελαφριά προσαρμογή υγιούς βάρους λόγω ηλικίας
     if age > 50:
         min_bmi = 20.0
         max_bmi = 27.0
@@ -67,26 +66,26 @@ def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, min_hw,
     pdf = FPDF()
     pdf.add_page()
     
-    # Φορτώνει τη γραμματοσειρά αυστηρά με μικρά γράμματα
-    pdf.add_font('arial', '', 'arial.ttf')
-    pdf.set_font('arial', '', 16)
+    # --- Η ΛΥΣΗ: Την ονομάζουμε "GreekFont" για να μην μπερδεύεται με τη Helvetica! ---
+    pdf.add_font('GreekFont', '', 'arial.ttf')
+    pdf.set_font('GreekFont', '', 16)
         
     pdf.cell(0, 10, "Αναφορά Διατροφικών Αναγκών", ln=True, align="C")
-    pdf.set_font('arial', '', 11)
+    pdf.set_font('GreekFont', '', 11)
     pdf.cell(0, 10, f"Ημερομηνία: {date.today().strftime('%d/%m/%Y')}", ln=True, align="R")
     pdf.line(10, 25, 200, 25)
     pdf.ln(10)
     
-    pdf.set_font('arial', '', 14)
+    pdf.set_font('GreekFont', '', 14)
     pdf.cell(0, 10, "1. Προφίλ & Σωματομετρικά", ln=True)
-    pdf.set_font('arial', '', 12)
+    pdf.set_font('GreekFont', '', 12)
     pdf.cell(0, 8, f"Φύλο: {gender}  |  Ηλικία: {age} ετών  |  Ύψος: {height} cm  |  Βάρος: {weight} kg", ln=True)
     pdf.cell(0, 8, f"Φυσική Δραστηριότητα: {pal_desc}", ln=True)
     pdf.ln(5)
     
-    pdf.set_font('arial', '', 14)
+    pdf.set_font('GreekFont', '', 14)
     pdf.cell(0, 10, "2. Βασικοί Δείκτες & Ενέργεια", ln=True)
-    pdf.set_font('arial', '', 12)
+    pdf.set_font('GreekFont', '', 12)
     pdf.cell(0, 8, f"Δείκτης Μάζας Σώματος (BMI): {bmi:.1f} ({bmi_cat})", ln=True)
     pdf.cell(0, 8, f"Ιδανικό Βάρος (Devine): {ibw:.1f} kg", ln=True)
     pdf.cell(0, 8, f"Εύρος Υγιούς Βάρους: Από {min_hw:.1f} kg έως {max_hw:.1f} kg", ln=True)
@@ -94,17 +93,17 @@ def create_pdf(weight, height, age, gender, pal_desc, bmi, bmi_cat, ibw, min_hw,
     pdf.cell(0, 8, f"Συνολική Δαπάνη Συντήρησης (TDEE): {tdee:.0f} kcal", ln=True)
     pdf.ln(5)
     
-    pdf.set_font('arial', '', 14)
+    pdf.set_font('GreekFont', '', 14)
     pdf.cell(0, 10, "3. Διατροφικός Στόχος", ln=True)
-    pdf.set_font('arial', '', 12)
+    pdf.set_font('GreekFont', '', 12)
     pdf.cell(0, 8, f"Στόχος: {goal}", ln=True)
     pdf.cell(0, 8, f"Προτεινόμενη Πρόσληψη Ενέργειας: {target_cals:.0f} kcal / ημέρα", ln=True)
     pdf.cell(0, 8, f"Στόχος Υδάτωσης: {water:.1f} Λίτρα / ημέρα", ln=True)
     pdf.ln(5)
     
-    pdf.set_font('arial', '', 14)
+    pdf.set_font('GreekFont', '', 14)
     pdf.cell(0, 10, "4. Κατανομή Μακροθρεπτικών", ln=True)
-    pdf.set_font('arial', '', 12)
+    pdf.set_font('GreekFont', '', 12)
     pdf.cell(0, 8, f"Πρωτεΐνη: {prot:.0f} g", ln=True)
     pdf.cell(0, 8, f"Λιπαρά: {fat:.0f} g", ln=True)
     pdf.cell(0, 8, f"Υδατάνθρακες: {carb:.0f} g", ln=True)
